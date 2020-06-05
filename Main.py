@@ -2,7 +2,7 @@ import pygame
 import random
 import math
 from pygame import mixer
-# import pickle
+import time
 
 # initialize the pygame
 pygame.init()
@@ -29,6 +29,9 @@ try:
 		highest_score = int(line)
 except:
 	highest_score = 0
+
+pauseImg = pygame.image.load('pause.png')
+playImg = pygame.image.load('play.png')
 
 # player
 # image size 64px
@@ -86,6 +89,44 @@ for i in range(player_lives):
 
 game_over_font = pygame.font.Font('freesansbold.ttf', 64)
 try_again_font = pygame.font.Font('freesansbold.ttf', 64)
+restart = False
+paused = False
+
+def replay():
+	global playerX, playerY, playerX_change, playerY_change, player_lives
+	global enemyImg, enemyX, enemyY, enemyX_change
+	global enemy_bulletImg, enemy_bulletX, enemy_bulletY, enemy_bulletY_change, enemy_bullet_fire
+	global num_enemy, bulletX, bulletY, bullet_fire, score_value, restart
+	# player
+	# image size 64px
+	playerX = 370
+	playerY = 480
+	playerX_change = 0
+	playerY_change = 0
+
+	player_lives = 5
+
+	# enemyies
+	# image size 64px
+	enemyImg = []
+	enemyX = []
+	enemyY = []
+	enemyX_change = []
+	enemy_bulletImg = []
+	enemy_bulletX = []
+	enemy_bulletY = []
+	enemy_bulletY_change = []
+	enemy_bullet_fire = []
+	num_enemy = 0
+	# bullet
+	# image size 32px
+	bulletX = playerX
+	bulletY = playerY
+	bullet_fire = False
+
+	score_value = 0
+	restart = False
+	paused = False
 
 def draw_lives(i):
 	screen.blit(lives_text, (580, 40))
@@ -96,7 +137,7 @@ def game_over_text():
 	screen.blit(game_over, (200, 250))
 
 def try_again_text():
-	try_again = try_again_font.render("TRY AGAIN?", True, (192, 192, 192))
+	try_again = try_again_font.render("TRY AGAIN?", True, (255, 255, 255))
 	screen.blit(try_again, (200, 350))
 
 def show_score(x, y):
@@ -133,7 +174,17 @@ while running:
 	screen.fill((0, 128, 128))
 	# background Image
 	screen.blit(background, (0, 0))
+	if not paused:
+		screen.blit(pauseImg, (480, 20))
+	else:
+		screen.blit(playImg, (480, 20))
+
 	for event in pygame.event.get():
+		if event.type == pygame.MOUSEBUTTONDOWN:
+			x, y = event.pos
+			if x in range(480, 544) and y in range(20, 84):
+				paused = not paused
+
 		if event.type == pygame.QUIT:
 			running = False
 		# check the keystroke pressed
@@ -148,20 +199,24 @@ while running:
 				playerY_change = 4
 			if event.key == pygame.K_SPACE:
 				if bullet_fire is False:
-					bullet_sound = mixer.Sound('laser.wav')
-					bullet_sound.play()
-					bulletX = playerX
-					bulletY = playerY
-					fire_bullet(bulletX, bulletY)
+					if not paused:
+						bullet_sound = mixer.Sound('laser.wav')
+						bullet_sound.play()
+						bulletX = playerX
+						bulletY = playerY
+						fire_bullet(bulletX, bulletY)
+					else:
+						paused = False
 
 		if event.type == pygame.KEYUP:
 			if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
 				playerX_change = 0
 			if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
 				playerY_change = 0
-
-	playerX += playerX_change
-	playerY += playerY_change
+	
+	if not paused:
+		playerX += playerX_change
+		playerY += playerY_change
 
 	# check boundaries
 	if playerX <= 10:
@@ -179,7 +234,8 @@ while running:
 		add_enemy()
 
 	for i in range(num_enemy):
-		enemy_bulletY[i] += enemy_bulletY_change[i]
+		if not paused:
+			enemy_bulletY[i] += enemy_bulletY_change[i]
 		screen.blit(enemy_bulletImg[i], (enemy_bulletX[i] + 16, enemy_bulletY[i] + 10))
 
 		collision = is_collision(playerX, playerY, enemy_bulletX[i], enemy_bulletY[i])
@@ -200,14 +256,22 @@ while running:
 			for j in range(num_enemy):
 				enemyY[i] = 1000 # make sure they disappear from screen
 			game_over_text()
+			button = pygame.Rect(200, 350, 400, 60)
+			pygame.draw.rect(screen, [0, 255, 0], button)
 			try_again_text()
-			break
+			x, y = pygame.mouse.get_pos()
+			pressed = pygame.mouse.get_pressed()[0]
+			if x in range(200, 600) and y in range(350, 410) and pressed and not restart:
+				restart = pressed
+				replay()
+				break
 
-		enemyX[i] += enemyX_change[i]
-		# enemy movement
-		if enemyX[i] <= 10 or enemyX[i] >= 726:
-			enemyX_change[i] = -enemyX_change[i]
-			enemyY[i] += 30
+		if not paused:
+			enemyX[i] += enemyX_change[i]
+			# enemy movement
+			if enemyX[i] <= 10 or enemyX[i] >= 726:
+				enemyX_change[i] = -enemyX_change[i]
+				enemyY[i] += 30
 
 		hitten = is_collision(enemyX[i], enemyY[i], bulletX, bulletY)
 		if hitten and bullet_fire is True:
@@ -229,7 +293,8 @@ while running:
 	# bullet movement
 	if bullet_fire is True:
 		fire_bullet(bulletX, bulletY)
-		bulletY -= bulletY_change
+		if not paused:
+			bulletY -= bulletY_change
 
 	# update personal high
 	if score_value > highest_score:
