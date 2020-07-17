@@ -1,6 +1,6 @@
 # Space-Invader
 
-<img
+![img](https://github.com/jikaizhang/Space-Invader/blob/master/img/screenshot.JPG)
 
 This is a classic game. Your goal is to attack as much ufos as possible, as well as not getting attacked.
 
@@ -19,7 +19,7 @@ Have Fun!
 Note: 
   To generate an executable file, you could run the following command: python setup.py bdist_msi
   Then go to dist/Space Invaders-0.0.0-amd64.msi, copy the directory shown, click finish.
-  <img
+  ![img](https://github.com/jikaizhang/Space-Invader/blob/master/img/setup_page.JPG)
   If you go to the directory now, you will see an exe file, open it and you are all set!
   
-  A simpler way is to directly download the file Space_Invaders.exe from this repository.
+  A simpler way is to directly download the folder "sample" from this repository.
